@@ -1,0 +1,579 @@
+// My name of this project is set to CoolApp, so that’s what the user sees on the homescreen of their phone and also what they’d see 
+// if they were in the app store trying to buy it.  This can be changed in the future but this is really just a testing out phase in 
+// my eyes so all the small details and stuff aren’t final or anything like that.  
+
+
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:camera/camera.dart';
+
+
+void main() {
+runApp(const MyApp());
+}
+
+
+// class to store Contractors & their info
+class Contractor {
+final String name;
+final double paintingRate;
+final double flooringRate;
+final double roofingRate;
+final String phoneNumber;
+
+
+Contractor({
+required this.name,
+required this.paintingRate,
+required this.flooringRate,
+required this.roofingRate,
+required this.phoneNumber,
+});
+}
+
+
+//the list within Browse Contractors button
+List<Contractor> contractors = [];
+
+
+class MyApp extends StatelessWidget {
+const MyApp({super.key, Key? keyy});
+
+
+@override
+Widget build(BuildContext context) {
+return MaterialApp(
+title: 'CoolApp',
+home: const HomeScreen(),
+//declaring routes for respective button push
+routes: {
+'/paint_estimate': (context) => const PaintEstimateScreen(),
+'/roofing_estimate': (context) => const RoofingEstimateScreen(),
+'/flooring_estimate': (context) => const FlooringEstimateScreen(),
+'/estimation_selection': (context) => const EstimationSelectionScreen(),
+'/contractor_options': (context) => const ContractorOptionsScreen(),
+'/contractor_registration': (context) =>
+const ContractorRegistrationScreen(),
+'/browse_contractors': (context) =>
+BrowseContractorsScreen(contractors: contractors),
+},
+);
+}
+}
+
+
+class HomeScreen extends StatelessWidget {
+const HomeScreen({super.key, Key? keyy});
+
+
+@override
+Widget build(BuildContext context) {
+return Scaffold(
+appBar: AppBar(
+title: const Text('Estimation Genie'),
+),
+body: Stack(
+children: <Widget>[
+// Background Image on Home Screen
+Image.asset(
+'/Users/b-rad/Downloads/BackgroundApp.jpg',
+fit: BoxFit.cover,
+width: double.infinity,
+height: double.infinity,
+),
+Center(
+child: Column(
+mainAxisAlignment: MainAxisAlignment.center,
+children: <Widget>[
+ElevatedButton(
+onPressed: () {
+// Navigate to the Estimation Selection screen
+Navigator.pushNamed(context, '/estimation_selection');
+},
+//top button on home page
+child: const Text('Estimate'),
+),
+ElevatedButton(
+onPressed: () {
+// Navigate to the Contractor Options screen (bottom home page button)
+Navigator.pushNamed(context, '/contractor_options');
+},
+child: const Text('Become or Find a Contractor'),
+),
+],
+),
+),
+],
+),
+);
+}
+}
+
+
+class EstimationSelectionScreen extends StatelessWidget {
+const EstimationSelectionScreen({super.key, Key? keyy});
+
+
+@override
+Widget build(BuildContext context) {
+return Scaffold(
+appBar: AppBar(
+//title for page AFTER home screen
+title: const Text('Type of Estimation'),
+),
+body: Center(
+child: Column(
+mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+children: <Widget>[
+ElevatedButton(
+onPressed: () {
+// Navigate to the Paint Estimate screen
+Navigator.pushNamed(context, '/paint_estimate');
+},
+child: const Text('Painting Estimate'),
+),
+ElevatedButton(
+onPressed: () {
+// Navigate to the Roofing Estimate screen
+Navigator.pushNamed(context, '/roofing_estimate');
+},
+child: const Text('Roofing Estimate'),
+),
+ElevatedButton(
+onPressed: () {
+// Navigate to the Flooring Estimate screen
+Navigator.pushNamed(context, '/flooring_estimate');
+},
+child: const Text('Flooring Estimate'),
+),
+],
+),
+),
+);
+}
+}
+
+
+class PaintEstimateScreen extends StatelessWidget {
+const PaintEstimateScreen({super.key, Key? keyy});
+
+
+@override
+Widget build(BuildContext context) {
+return Scaffold(
+appBar: AppBar(
+title: const Text('Paint Estimate'),
+),
+body: const PaintEstimationWidget(),
+);
+}
+}
+
+
+class PaintEstimationWidget extends StatefulWidget {
+const PaintEstimationWidget({super.key});
+
+
+@override
+// ignore: library_private_types_in_public_api
+_PaintEstimationWidgetState createState() => _PaintEstimationWidgetState();
+}
+
+
+class _PaintEstimationWidgetState extends State<PaintEstimationWidget> {
+late CameraController _cameraController;
+bool _isCameraInitialized = false;
+XFile? _capturedImage;
+double length = 0;
+double height = 0;
+double paintNeeded = 0;
+
+
+@override
+void initState() {
+super.initState();
+_initializeCamera();
+}
+
+
+Future<void> _initializeCamera() async {
+final cameras = await availableCameras();
+if (cameras.isNotEmpty) {
+final firstCamera = cameras.first;
+_cameraController = CameraController(
+firstCamera,
+ResolutionPreset.medium,
+);
+
+
+await _cameraController.initialize();
+if (!mounted) {
+return;
+}
+
+
+setState(() {
+_isCameraInitialized = true;
+});
+}
+}
+
+
+@override
+void dispose() {
+_cameraController.dispose();
+super.dispose();
+}
+
+
+Future<void> _captureImage() async {
+if (!_isCameraInitialized) {
+return;
+}
+
+
+try {
+final XFile capturedImage = await _cameraController.takePicture();
+setState(() {
+_capturedImage = capturedImage;
+});
+} catch (e) {
+// ignore: avoid_print
+print('Error capturing image: $e');
+}
+}
+
+
+void calculatePaintNeeded() {
+setState(() {
+paintNeeded = (length * height) / 400.0;
+});
+}
+
+
+@override
+Widget build(BuildContext context) {
+return Center(
+child: Column(
+mainAxisAlignment: MainAxisAlignment.center,
+children: <Widget>[
+const Text('Use the camera to measure the wall:'),
+ElevatedButton(
+onPressed: () async {
+// Capture an image using the camera
+await _captureImage();
+},
+child: const Text('Open Camera'),
+),
+const SizedBox(height: 16),
+if (_capturedImage != null)
+Column(
+children: [
+Image.file(File(_capturedImage!.path)),
+ElevatedButton(
+onPressed: () {
+// Implement image processing to measure the wall here.
+// Set the 'length' and 'height' variables with the measured values.
+setState(() {
+length = 10; // Replace with measured length
+height = 12; // Replace with measured height
+});
+},
+child: const Text('Calculate Paint Needed'),
+),
+Text('Length: $length'),
+Text('Height: $height'),
+ElevatedButton(
+onPressed: () {
+calculatePaintNeeded();
+},
+child: const Text('Calculate Paint Needed'),
+),
+Text('Paint Needed: $paintNeeded gallons'),
+],
+),
+],
+),
+);
+}
+}
+
+
+class RoofingEstimateScreen extends StatelessWidget {
+const RoofingEstimateScreen({super.key, Key? keyy});
+
+
+@override
+Widget build(BuildContext context) {
+return Scaffold(
+appBar: AppBar(
+title: const Text('Roofing Estimate'),
+),
+body: const Center(
+child: Icon(Icons.home, size: 100.0), // Roofing icon
+),
+);
+}
+}
+
+
+class FlooringEstimateScreen extends StatelessWidget {
+const FlooringEstimateScreen({super.key, Key? keyy});
+
+
+@override
+Widget build(BuildContext context) {
+return Scaffold(
+appBar: AppBar(
+title: const Text('Flooring Estimate'),
+),
+body: const Center(
+child: Icon(Icons.backpack, size: 100.0), // Backpack icon
+),
+);
+}
+}
+
+
+// Add Contractor Options Screen
+class ContractorOptionsScreen extends StatelessWidget {
+const ContractorOptionsScreen({super.key, Key? keyy});
+
+
+@override
+Widget build(BuildContext context) {
+return Scaffold(
+appBar: AppBar(
+title: const Text('Contractor Options'),
+),
+body: Center(
+child: Column(
+mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+children: <Widget>[
+ElevatedButton(
+onPressed: () {
+// Navigate to the contractor registration page
+Navigator.pushNamed(context, '/contractor_registration');
+},
+child: const Text('Become a Contractor'),
+),
+ElevatedButton(
+onPressed: () {
+// Navigate to the Browse Contractors screen
+Navigator.pushNamed(context, '/browse_contractors');
+},
+child: const Text('Browse Contractors'),
+),
+],
+),
+),
+);
+}
+}
+
+
+class BrowseContractorsScreen extends StatelessWidget {
+final List<Contractor> contractors;
+
+
+const BrowseContractorsScreen({
+Key? key,
+required this.contractors,
+}) : super(key: key);
+
+
+@override
+Widget build(BuildContext context) {
+return Scaffold(
+appBar: AppBar(
+title: const Text('Browse Contractors'),
+),
+body: ListView.builder(
+itemCount: contractors.length,
+itemBuilder: (context, index) {
+final contractor = contractors[index];
+return GestureDetector(
+onTap: () {
+// Navigate to the ContractorDetailScreen when a name is tapped
+Navigator.push(
+context,
+MaterialPageRoute(
+builder: (context) => ContractorDetailScreen(
+contractor: contractor,
+),
+),
+);
+},
+child: ListTile(
+title: Text('Name: ${contractor.name}'),
+subtitle: Text('Phone: ${contractor.phoneNumber}'),
+),
+);
+},
+),
+);
+}
+}
+
+
+// Add Contractor Registration Screen
+class ContractorRegistrationScreen extends StatefulWidget {
+const ContractorRegistrationScreen({super.key});
+
+
+@override
+// ignore: library_private_types_in_public_api
+_ContractorRegistrationScreenState createState() =>
+_ContractorRegistrationScreenState();
+}
+
+
+class _ContractorRegistrationScreenState
+extends State<ContractorRegistrationScreen> {
+// Define TextEditingController for user inputs
+final TextEditingController nameController = TextEditingController();
+final TextEditingController paintingRateController = TextEditingController();
+final TextEditingController flooringRateController = TextEditingController();
+final TextEditingController roofingRateController = TextEditingController();
+final TextEditingController phoneNumberController = TextEditingController();
+
+
+@override
+void dispose() {
+// Clean up the controllers when the widget is disposed
+nameController.dispose();
+paintingRateController.dispose();
+flooringRateController.dispose();
+roofingRateController.dispose();
+phoneNumberController.dispose();
+super.dispose();
+}
+
+
+@override
+Widget build(BuildContext context) {
+return Scaffold(
+appBar: AppBar(
+title: const Text('Contractor Registration'),
+),
+body: Padding(
+padding: const EdgeInsets.all(16.0),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.stretch,
+children: <Widget>[
+// Contractor Name
+TextFormField(
+controller: nameController,
+decoration: const InputDecoration(labelText: 'Name'),
+),
+const SizedBox(height: 16),
+
+
+// Hourly Rate for Painting
+TextFormField(
+controller: paintingRateController,
+keyboardType: TextInputType.number,
+decoration:
+const InputDecoration(labelText: 'Hourly Rate for Painting'),
+),
+const SizedBox(height: 16),
+
+
+// Hourly Rate for Flooring
+TextFormField(
+controller: flooringRateController,
+keyboardType: TextInputType.number,
+decoration:
+const InputDecoration(labelText: 'Hourly Rate for Flooring'),
+),
+const SizedBox(height: 16),
+
+
+// Hourly Rate for Roofing
+TextFormField(
+controller: roofingRateController,
+keyboardType: TextInputType.number,
+decoration:
+const InputDecoration(labelText: 'Hourly Rate for Roofing'),
+),
+const SizedBox(height: 16),
+
+
+// Phone Number
+TextFormField(
+controller: phoneNumberController,
+keyboardType: TextInputType.phone,
+decoration: const InputDecoration(labelText: 'Phone Number'),
+),
+const SizedBox(height: 16),
+
+
+ElevatedButton(
+onPressed: () {
+// Process the registration data here
+final name = nameController.text;
+final paintingRate = double.parse(paintingRateController.text);
+final flooringRate = double.parse(flooringRateController.text);
+final roofingRate = double.parse(roofingRateController.text);
+final phoneNumber = phoneNumberController.text;
+
+
+// Create a new Contractor object and add it to the list
+final newContractor = Contractor(
+name: name,
+paintingRate: paintingRate,
+flooringRate: flooringRate,
+roofingRate: roofingRate,
+phoneNumber: phoneNumber,
+);
+
+
+contractors
+.add(newContractor); // Add the new contractor to the list
+
+
+// After processing the registration data, navigate to the "Browse Contractors" screen
+Navigator.pushReplacementNamed(context, '/browse_contractors');
+},
+child: const Text('Register as a Contractor'),
+),
+],
+),
+),
+);
+}
+}
+
+
+// Screen when a contractor is clicked on within Browse Contractors button
+class ContractorDetailScreen extends StatelessWidget {
+final Contractor contractor;
+
+
+const ContractorDetailScreen({Key? key, required this.contractor})
+: super(key: key);
+
+
+@override
+Widget build(BuildContext context) {
+return Scaffold(
+appBar: AppBar(
+title: const Text('Contractor Details'),
+),
+body: Padding(
+padding: const EdgeInsets.all(16.0),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.stretch,
+children: <Widget>[
+Text('Name: ${contractor.name}'),
+Text('Phone: ${contractor.phoneNumber}'),
+Text('Hourly Rate for Painting: ${contractor.paintingRate}'),
+Text('Hourly Rate for Flooring: ${contractor.flooringRate}'),
+Text('Hourly Rate for Roofing: ${contractor.roofingRate}'),
+// Above is conractor details
+],
+),
+),
+);
+}
+}
