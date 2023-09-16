@@ -1,0 +1,591 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+// class to store Contractors & their info
+class Contractor {
+  final String name;
+  final double paintingRate;
+  final double flooringRate;
+  final double roofingRate;
+  final String phoneNumber;
+
+  Contractor({
+    required this.name,
+    required this.paintingRate,
+    required this.flooringRate,
+    required this.roofingRate,
+    required this.phoneNumber,
+  });
+}
+
+// the list within Browse Contractors button
+List<Contractor> contractors = [];
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key, Key? keyy});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'EstimationPro',
+      home: const HomeScreen(),
+      // declaring routes for respective button push
+      routes: {
+        '/paint_estimate': (context) => const PaintEstimateScreen(),
+        '/roofing_estimate': (context) => const RoofingEstimateScreen(),
+        '/flooring_estimate': (context) => const FlooringEstimateScreen(),
+        '/estimation_selection': (context) => const EstimationSelectionScreen(),
+        '/contractor_options': (context) => const ContractorOptionsScreen(),
+        '/contractor_registration': (context) =>
+            const ContractorRegistrationScreen(),
+        '/browse_contractors': (context) =>
+            BrowseContractorsScreen(contractors: contractors),
+      },
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key, Key? keyy});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Estimation Pro'),
+      ),
+      body: Stack(
+        children: <Widget>[
+          // Background Image on Home Screen
+          Image.asset(
+            '/Users/b-rad/Downloads/BackgroundApp.jpg',
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+          ),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                ElevatedButton(
+                  onPressed: () {
+                    // Navigate to the Estimation Selection screen
+                    Navigator.pushNamed(context, '/estimation_selection');
+                  },
+                  // top button on the home page
+                  child: const Text('Estimate'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Navigate to the Contractor Options screen (bottom home page button)
+                    Navigator.pushNamed(context, '/contractor_options');
+                  },
+                  child: const Text('Become or Find a Contractor'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class EstimationSelectionScreen extends StatelessWidget {
+  const EstimationSelectionScreen({super.key, Key? keyy});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        // title for page AFTER home screen
+        title: const Text('Type of Estimation'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to the Paint Estimate screen
+                Navigator.pushNamed(context, '/paint_estimate');
+              },
+              child: const Text('Painting Estimate'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to the Roofing Estimate screen
+                Navigator.pushNamed(context, '/roofing_estimate');
+              },
+              child: const Text('Roofing Estimate'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to the Flooring Estimate screen
+                Navigator.pushNamed(context, '/flooring_estimate');
+              },
+              child: const Text('Flooring Estimate'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class PaintEstimateScreen extends StatefulWidget {
+  const PaintEstimateScreen({Key? key}) : super(key: key);
+
+  @override
+  // ignore: library_private_types_in_public_api
+  _PaintEstimateScreenState createState() => _PaintEstimateScreenState();
+}
+
+class _PaintEstimateScreenState extends State<PaintEstimateScreen> {
+  double lengthFeet = 0;
+  double lengthInches = 0;
+  double heightFeet = 0;
+  double heightInches = 0;
+  int numWalls = 1;
+  int numDoors = 0;
+  double paintNeeded = 0;
+
+  double baseboardHeightInches = 0; // New variable for baseboard height
+  double crownMoldingHeightInches = 0; // New variable for crown molding height
+
+  static const double doorSquareFootage =
+      (80.0 / 12) * (36.0 / 12); // Convert inches to feet
+
+  void calculatePaintNeeded() {
+    setState(() {
+      double totalWallArea =
+          ((lengthFeet + lengthInches / 12) * (heightFeet + heightInches / 12));
+
+      // Deduct the square footage of doors
+      double adjustedArea = totalWallArea - (numDoors * doorSquareFootage);
+
+      // Deduct baseboard area if height is greater than 0
+      if (baseboardHeightInches > 0) {
+        adjustedArea -= (baseboardHeightInches / 12 * lengthFeet);
+      }
+
+      // Deduct crown molding area if height is greater than 0
+      if (crownMoldingHeightInches > 0) {
+        adjustedArea -= (crownMoldingHeightInches / 12 * lengthFeet);
+      }
+
+      paintNeeded = (adjustedArea / 400.0) * numWalls;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Paint Estimate'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            const Text(
+              '            Step 1: Open Measure App',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    keyboardType: TextInputType.number,
+                    maxLength: 3, // Limit the maximum length to 3 digits
+                    onChanged: (value) {
+                      setState(() {
+                        lengthFeet = double.tryParse(value) ?? 0;
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'Length (Feet)',
+                      counterText: '', // Remove the character counter
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextFormField(
+                    keyboardType: TextInputType.number,
+                    maxLength: 3, // Limit the maximum length to 3 digits
+                    onChanged: (value) {
+                      setState(() {
+                        lengthInches = double.tryParse(value) ?? 0;
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'Length (Inches)',
+                      counterText: '', // Remove the character counter
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    keyboardType: TextInputType.number,
+                    maxLength: 3, // Limit the maximum length to 3 digits
+                    onChanged: (value) {
+                      setState(() {
+                        heightFeet = double.tryParse(value) ?? 0;
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'Height (Feet)',
+                      counterText: '', // Remove the character counter
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextFormField(
+                    keyboardType: TextInputType.number,
+                    maxLength: 3, // Limit the maximum length to 3 digits
+                    onChanged: (value) {
+                      setState(() {
+                        heightInches = double.tryParse(value) ?? 0;
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'Height (Inches)',
+                      counterText: '', // Remove the character counter
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                setState(() {
+                  numWalls = int.tryParse(value) ?? 1;
+                });
+              },
+              decoration: const InputDecoration(labelText: 'Number of Walls'),
+            ),
+            TextFormField(
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                setState(() {
+                  numDoors = int.tryParse(value) ?? 0;
+                });
+              },
+              decoration: const InputDecoration(labelText: 'Number of Doors'),
+            ),
+            TextFormField(
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                setState(() {
+                  baseboardHeightInches = double.tryParse(value) ?? 0;
+                });
+              },
+              decoration:
+                  const InputDecoration(labelText: 'Baseboard Height (Inches)'),
+            ),
+            TextFormField(
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                setState(() {
+                  crownMoldingHeightInches = double.tryParse(value) ?? 0;
+                });
+              },
+              decoration: const InputDecoration(
+                  labelText: 'Crown Molding Height (Inches)'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                calculatePaintNeeded();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                minimumSize: const Size(double.infinity, 40),
+              ),
+              child: const Text(
+                'Calculate!',
+                style: TextStyle(fontSize: 20),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Text(
+                'Paint Needed (gallons): $paintNeeded',
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class RoofingEstimateScreen extends StatelessWidget {
+  const RoofingEstimateScreen({super.key, Key? keyy});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Roofing Estimate'),
+      ),
+      body: const Center(
+        child: Icon(Icons.home, size: 100.0), // Roofing icon
+      ),
+    );
+  }
+}
+
+class FlooringEstimateScreen extends StatelessWidget {
+  const FlooringEstimateScreen({super.key, Key? keyy});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Flooring Estimate'),
+      ),
+      body: const Center(
+        child: Icon(Icons.backpack, size: 100.0), // Backpack icon
+      ),
+    );
+  }
+}
+
+// Add Contractor Options Screen
+class ContractorOptionsScreen extends StatelessWidget {
+  const ContractorOptionsScreen({super.key, Key? keyy});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Contractor Options'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to the contractor registration page
+                Navigator.pushNamed(context, '/contractor_registration');
+              },
+              child: const Text('Become a Contractor'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to the Browse Contractors screen
+                Navigator.pushNamed(context, '/browse_contractors');
+              },
+              child: const Text('Browse Contractors'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class BrowseContractorsScreen extends StatelessWidget {
+  final List<Contractor> contractors;
+
+  const BrowseContractorsScreen({
+    Key? key,
+    required this.contractors,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Browse Contractors'),
+      ),
+      body: ListView.builder(
+        itemCount: contractors.length,
+        itemBuilder: (context, index) {
+          final contractor = contractors[index];
+          return GestureDetector(
+            onTap: () {
+              // Navigate to the ContractorDetailScreen when a name is tapped
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ContractorDetailScreen(
+                    contractor: contractor,
+                  ),
+                ),
+              );
+            },
+            child: ListTile(
+              title: Text('Name: ${contractor.name}'),
+              subtitle: Text('Phone: ${contractor.phoneNumber}'),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// Add Contractor Registration Screen
+class ContractorRegistrationScreen extends StatefulWidget {
+  const ContractorRegistrationScreen({super.key});
+
+  @override
+  // ignore: library_private_types_in_public_api
+  _ContractorRegistrationScreenState createState() =>
+      _ContractorRegistrationScreenState();
+}
+
+class _ContractorRegistrationScreenState
+    extends State<ContractorRegistrationScreen> {
+  // Define TextEditingController for user inputs
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController paintingRateController = TextEditingController();
+  final TextEditingController flooringRateController = TextEditingController();
+  final TextEditingController roofingRateController = TextEditingController();
+  final TextEditingController phoneNumberController = TextEditingController();
+
+  @override
+  void dispose() {
+    // Clean up the controllers when the widget is disposed
+    nameController.dispose();
+    paintingRateController.dispose();
+    flooringRateController.dispose();
+    roofingRateController.dispose();
+    phoneNumberController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Contractor Registration'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            // Contractor Name
+            TextFormField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Name'),
+            ),
+            const SizedBox(height: 16),
+
+            // Hourly Rate for Painting
+            TextFormField(
+              controller: paintingRateController,
+              keyboardType: TextInputType.number,
+              decoration:
+                  const InputDecoration(labelText: 'Hourly Rate for Painting'),
+            ),
+            const SizedBox(height: 16),
+
+            // Hourly Rate for Flooring
+            TextFormField(
+              controller: flooringRateController,
+              keyboardType: TextInputType.number,
+              decoration:
+                  const InputDecoration(labelText: 'Hourly Rate for Flooring'),
+            ),
+            const SizedBox(height: 16),
+
+            // Hourly Rate for Roofing
+            TextFormField(
+              controller: roofingRateController,
+              keyboardType: TextInputType.number,
+              decoration:
+                  const InputDecoration(labelText: 'Hourly Rate for Roofing'),
+            ),
+            const SizedBox(height: 16),
+
+            // Phone Number
+            TextFormField(
+              controller: phoneNumberController,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(labelText: 'Phone Number'),
+            ),
+            const SizedBox(height: 16),
+
+            ElevatedButton(
+              onPressed: () {
+                // Process the registration data here
+                final name = nameController.text;
+                final paintingRate = double.parse(paintingRateController.text);
+                final flooringRate = double.parse(flooringRateController.text);
+                final roofingRate = double.parse(roofingRateController.text);
+                final phoneNumber = phoneNumberController.text;
+
+                // Create a new Contractor object and add it to the list
+                final newContractor = Contractor(
+                  name: name,
+                  paintingRate: paintingRate,
+                  flooringRate: flooringRate,
+                  roofingRate: roofingRate,
+                  phoneNumber: phoneNumber,
+                );
+
+                contractors
+                    .add(newContractor); // Add the new contractor to the list
+
+                // After processing the registration data, navigate to the "Browse Contractors" screen
+                Navigator.pushReplacementNamed(context, '/browse_contractors');
+              },
+              child: const Text('Register as a Contractor'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Screen when a contractor is clicked on within Browse Contractors button
+class ContractorDetailScreen extends StatelessWidget {
+  final Contractor contractor;
+
+  const ContractorDetailScreen({Key? key, required this.contractor})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Contractor Details'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Text('Name: ${contractor.name}'),
+            Text('Phone: ${contractor.phoneNumber}'),
+            Text('Hourly Rate for Painting: ${contractor.paintingRate}'),
+            Text('Hourly Rate for Flooring: ${contractor.flooringRate}'),
+            Text('Hourly Rate for Roofing: ${contractor.roofingRate}'),
+            // Above is contractor details
+          ],
+        ),
+      ),
+    );
+  }
+}
